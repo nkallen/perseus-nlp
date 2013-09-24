@@ -1,0 +1,9 @@
+[submodule "vendor/treebank"]
+	path = vendor/treebank
+	url = https://github.com/nkallen/treebank.git
+[submodule "vendor/canonical"]
+	path = vendor/canonical
+	url = https://github.com/nkallen/canonical.git
+[submodule "vendor/p4_misc"]
+	path = vendor/p4_misc
+	url = https://github.com/PerseusDL/p4_misc.git

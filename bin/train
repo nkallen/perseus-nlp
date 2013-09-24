@@ -1,0 +1,68 @@
+#!/usr/bin/env coffee
+
+childProcess = require('child_process')
+path = require('path')
+SparseVector = require('../lib/vector')
+language = require('../lib/language')
+
+parallelism = Math.floor(require('os').cpus().length / 2)
+ITERATIONS = 20
+
+raw = ""
+process.stdin.on('data', (chunk) ->
+  raw += chunk
+)
+
+process.stdin.on('end', ->
+  console.warn("#{new Date()}\tAll data read on stdin.")
+  trainings = []
+  for line in raw.split('\n')
+    break if line.trim() == ''
+    sentence = JSON.parse(line)
+    forms = []
+    labels = []
+    for token in sentence
+      forms.push(token.form)
+      labels.push(language.token2tag(token, language.Features))
+    training = [forms, labels]
+    trainings.push(training)
+
+  hunkSize = Math.ceil(trainings.length / parallelism)
+  children = []
+
+  iterate = (i, trainings, seed) ->
+    if i == 0
+      console.log(JSON.stringify(seed))
+      process.exit()
+
+    console.warn("#{new Date()}\tTraining iteration #{ITERATIONS - i + 1}")
+    console.warn("=============")
+    console.warn(JSON.stringify(seed.hash))
+    console.warn("=============")
+    workersFinished = 0
+    for j in [0...parallelism]
+      do ->
+        message = JSON.stringify([trainings.slice(j * hunkSize, (j+1) * hunkSize), seed.hash])
+        console.warn("#{new Date}\tForking child #{j}")
+        child =
+          childProcess.spawn(
+            path.join(__dirname, 'train-worker'), [],
+            execPath: './node_modules/coffee-script/bin/coffee'
+            stdio: ['pipe', 'pipe', process.stderr]
+          )
+        output = ""
+        child.stdout.on('data', (chunk) ->
+          output += chunk
+        )
+        child.stdout.on('end', ->
+          seed.plusEq(JSON.parse(output))
+          if workersFinished++ == parallelism - 1
+            iterate(i - 1, trainings, seed)
+        )
+        child.stdin.write(message)
+        child.stdin.end()
+
+  iterate(ITERATIONS, trainings, SparseVector.zero())
+)
+
+process.stdin.resume()

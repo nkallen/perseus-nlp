@@ -1,0 +1,21 @@
+#!/usr/bin/env coffee
+
+libxml = require('libxmljs')
+language = require('../lib/language')
+
+raw = ""
+process.stdin.on('data', (chunk) ->
+  raw += chunk
+)
+
+process.stdin.on('end', ->
+  text = JSON.parse(raw)
+  sentence = []
+  for token in text
+    if language.StopPunctuation.indexOf(token.form) > -1
+      if sentence.length
+        process.stdout.write(JSON.stringify(sentence) + '\n')
+      sentence = []
+    else
+      sentence.push(token)
+)

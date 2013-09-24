@@ -1,0 +1,8 @@
+TODO
+
+normalize grave accents to acutes
+make all files input on command line, through makefile
+  similarly, decide what to do about features
+
+QS
+- should sentence boundaries include ,: too?

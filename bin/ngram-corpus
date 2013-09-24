@@ -1,0 +1,23 @@
+#!/usr/bin/env coffee
+
+libxml = require('libxmljs')
+Ngram = require('../lib/ngram')
+language = require('../lib/language')
+
+N = Number(process.argv[2])
+
+raw = ""
+process.stdin.on('data', (chunk) ->
+  raw += chunk
+)
+
+process.stdin.on('end', ->
+  text = libxml.parseXml(raw).get('/TEI.2/text/body').text()
+  for sentence in text.split(language.StopPunctuationRE)
+    ngram = new Ngram(N)
+    for token in sentence.trim().split(/\s+/)
+      ngram.push(token)
+      process.stdout.write(JSON.stringify(ngram.toArray()) + '\n')
+)
+
+process.stdin.resume()

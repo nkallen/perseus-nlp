@@ -1,0 +1,30 @@
+#!/usr/bin/env coffee
+
+libxml = require('libxmljs')
+Ngram = require('../lib/ngram')
+language = require('../lib/language')
+
+N = Number(process.argv[2])
+features =
+  if process.argv.length > 3
+    process.argv[3..]
+  else
+    language.Features
+
+raw = ""
+process.stdin.on('data', (chunk) ->
+  raw += chunk
+)
+
+process.stdin.on('end', ->
+  text = JSON.parse(raw)
+  ngram = new Ngram(N)
+  for token in text
+    if language.StopPunctuation.indexOf(token.form) > -1
+      ngram.push(language.Stop)
+      process.stdout.write(ngram.toArray().join('\t') + '\n')
+      ngram = new Ngram(N)
+      continue
+    ngram.push(language.token2tag(token, features))
+    process.stdout.write(ngram.toArray().join('\t') + '\n')
+)

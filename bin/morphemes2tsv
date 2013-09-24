@@ -1,0 +1,191 @@
+#!/usr/bin/env coffee --nodejs --prof
+
+fs = require('fs')
+greek = require('perseus-util').greek
+libxml = require('libxmljs')
+stream = require('stream')
+unorm = require('unorm')
+
+help = "
+Import the Perseus Morpheme data into a Database
+
+Provide path to morph file on command line, e.g.,
+
+  ./import.coffee sgml/xml/data/greek.morph.xml
+"
+
+fileSource = fs.createReadStream(
+  process.argv[2],
+  {encoding: 'utf8'})
+
+class AnalysisStream extends stream.Stream
+  isPaused = false
+
+  constructor: (@parser) ->
+    @writable = @readable = true
+  write: (chunk, encoding) ->
+    @parser.write(chunk, (analyses) =>
+      emissions = (@emit('data', analysis) for analysis in analyses)
+      pause() if false in emissions
+    )
+    !isPaused
+  pause: ->
+    isPaused = true
+  resume: ->
+    isPaused = false
+    @emit 'drain'
+  end: ->
+    @emit 'end'
+
+class AnalysisParser
+  CAPITAL = /^\*/
+  CONTRACTION = /'$/
+  WEIRD = /[_\-\^]/
+
+  class State
+    @skip:               new State
+    @handleForm:         new State
+    @awaitLemma:         new State
+    @handleLemma:        new State
+    @awaitPartOfSpeech:  new State
+    @handlePartOfSpeech: new State
+    @handleMorpheme:     new State
+    @handleNumber:       new State
+    @handleTense:        new State
+    @handleVoice:        new State
+    @handleGender:       new State
+    @handleCase:         new State
+    @handlePerson:       new State
+    @handleDialect:      new State
+    @handleFeature:      new State
+
+  state = State.skip
+  analyses = []
+  analysis = null
+  skip = ->
+    analysis = null
+    state = State.skip
+  handleAnalysis = {
+    startElementNS: (elem, attrs, prefix, uri, namespaces) ->
+      if elem == "form"
+        analyses.push(analysis) if analysis?
+        analysis = {}
+        state = State.handleForm
+
+      switch state
+        when State.awaitPartOfSpeech
+          if elem == "pos"
+            state = State.handlePartOfSpeech
+        when State.awaitLemma
+          if elem == "lemma"
+            state = State.handleLemma
+        when State.handleMorpheme
+          switch elem
+            when "number"
+              state = State.handleNumber
+            when "tense"
+              state = State.handleTense
+            when "voice"
+              state = State.handleVoice
+            when "gender"
+              state = State.handleGender
+            when "case"
+              state = State.handleCase
+            when "person"
+              state = State.handlePerson
+            when "mood"
+              state = State.handleMood
+            when "dialect"
+              state = State.handleDialect
+            when "feature"
+              state = State.handleFeature
+    characters: (chars) ->
+      switch state
+        when State.handleForm
+          analysis.form = chars
+          state = State.awaitLemma
+        when State.handleLemma
+          analysis.lemma = chars
+          state = State.awaitPartOfSpeech
+        when State.handlePartOfSpeech
+          analysis.partOfSpeech = chars
+          state = State.handleMorpheme
+        when State.handleNumber
+          analysis.number = chars
+        when State.handleTense
+          analysis.tense = chars
+        when State.handleVoice
+          analysis.voice = chars
+        when State.handleGender
+          analysis.gender = chars
+        when State.handleCase
+          analysis.case = chars
+        when State.handleMood
+          analysis.mood = chars
+        when State.handlePerson
+          analysis.person = chars
+        when State.handleDialect
+          # analysis.dialect = greek.Dialect.toBitmap(greek.Dialect[word] for word in chars.split(/\s/))
+          null
+        when State.handleFeature
+          # analysis.feature = greek.Feature.toBitmap(greek.Feature[word] for word in chars.split(/\s/))
+          null
+    endElementNS: (elem, prefix, uri) ->
+      switch state
+        when State.handleNumber, State.handleTense, State.handleVoice, State.handleGender, State.handleCase, State.handleMood, State.handlePerson, State.handleDialect, State.handleFeature
+          switch elem
+            when "number", "tense", "voice", "gender", "case", "mood", "person", "dialect", "feature"
+              state = State.handleMorpheme
+  }
+  parser = new libxml.SaxPushParser(handleAnalysis)
+
+  write: (chunk, oncomplete) ->
+    parser.push(chunk)
+    oncomplete(analyses)
+    analyses = []
+
+
+class JsonStream extends stream.Stream
+ result = {}
+ i = 0
+ constructor: ->
+    @writable = true
+  write: (chunk, encoding) ->
+    item = sanitize(chunk)
+    morpheme = chunk.form
+    result[morpheme] ||= []
+    result[morpheme].push(item)
+    true
+  end: ->
+    for key, value of result
+      console.log("#{key}\t#{JSON.stringify(value)}")
+    @emit 'end', result
+
+  sanitize = do ->
+    sanitizeBitmap = (bitmap) ->
+      bitmap ||= []
+      tmp = new Buffer(length = bitmap.length * 4)
+      offset = length - 4
+      for word in bitmap
+        tmp.writeUInt32BE(word, offset)
+        offset -= 4
+      tmp
+
+    (item) ->
+      partOfSpeech = greek.PartOfSpeech.get(item.partOfSpeech)
+      lemma: item.lemma
+      form: item.form
+      partOfSpeech: partOfSpeech
+      number: greek.Number.get(item.number)
+      tense: greek.Tense.get(item.tense)
+      mood: greek.Mood.get(item.mood)
+      gender: greek.Gender.get(item.gender)
+      case: greek.Case.get(item.case)
+      person: if partOfSpeech == greek.PartOfSpeech.verb then greek.Person.get(item.person) else null
+      voice: greek.Voice.get(item.voice)
+      # dialect: sanitizeBitmap(item.dialect)
+      # feature: sanitizeBitmap(item.feature)
+
+analysisStream = new AnalysisStream(new AnalysisParser)
+fileSource.pipe(analysisStream)
+analysisStream.pipe(new JsonStream)

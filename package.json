@@ -1,0 +1,35 @@
+{
+  "name": "perseus-nlp",
+  "version": "0.0.1",
+  "author": "Nick Kallen",
+  "description": "",
+  "scripts": {
+    "start": "./node_modules/.bin/coffee bin/server.coffee",
+    "test": "mocha --recursive --compilers coffee:coffee-script"
+  },
+  "main": "./lib/index.coffee",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nkallen/pseudw.git"
+  },
+  "engines": {
+    "npm": "1.2.x"
+  },
+  "dependencies" : {
+    "perseus-util"   : "0.0.x",
+    "unorm"          : "1.1.x",
+    "coffee-script"  : "git://github.com/jashkenas/coffee-script.git#master",
+    "express"        : "3.4.x",
+    "JSONStream"     : "0.7.x",
+    "ejs"            : "0.8.x"
+  },
+  "devDependencies" : {
+    "should"  : "1.2.x"
+  },
+  "analyze": true,
+  "bundleDependencies": [],
+  "license": "MIT",
+  "engines": {
+    "node": "0.10.x"
+  }
+}

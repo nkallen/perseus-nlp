@@ -1,0 +1,56 @@
+#!/usr/bin/env coffee
+
+fs = require('fs')
+path = require('path')
+language = require('../lib/language')
+readline = require('readline')
+
+accentuation = process.argv[2]
+
+rd = readline.createInterface(
+  input: process.stdin
+  output: process.stdout
+  terminal: false
+)
+
+result = {}
+
+accentuated = (line) ->
+  [lemma, morphemes] = line.split('\t')
+  [lemma, morphemes] = [lemma, JSON.parse(morphemes)]
+  result[lemma] ||= {}
+  result[lemma][language.token2tag(morpheme, language.Features)] = true for morpheme in morphemes
+
+unaccentuated = (line) ->
+  [lemma, morphemes] = line.split('\t')
+  [lemma, morphemes] = [language.stripAccents(lemma), JSON.parse(morphemes)]
+  result[lemma] ||= []
+  result[lemma].push(language.token2tag(morpheme, language.Features)) for morpheme in morphemes
+
+f =
+  switch accentuation
+    when 'accentuated'
+      accentuated
+    when 'unaccentuated'
+      unaccentuated
+
+rd.on('line', (line) ->
+  return if line.trim() == ""
+  f(line)
+)
+
+rd.on('close', ->
+  console.warn("Done parsing; Stringifying...")      
+  process.stdout.write("{\n")
+  length = Object.keys(result).length
+  i = 0
+  for key, value of result
+    process.stdout.write(JSON.stringify(key))
+    process.stdout.write(":")
+    process.stdout.write(JSON.stringify(value))
+    if i++ < length - 1
+      process.stdout.write(",\n")
+    else
+      process.stdout.write("\n")
+  process.stdout.write("}\n")
+)

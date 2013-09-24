@@ -1,0 +1,25 @@
+#!/usr/bin/env coffee
+
+fs = require('fs')
+
+raw = ""
+process.stdin.on('data', (chunk) ->
+  raw += chunk
+)
+
+process.stdin.on('end', ->
+  result = {}
+  for line in raw.split(/\n/)
+    tokens = line.split(/\t/)
+    cursor = result
+    for token, i in tokens
+      if i == tokens.length - 1
+        cursor[tokens[i]] = true
+      else
+        cursor[tokens[i]] ?= {}
+      cursor = cursor[tokens[i]]
+
+  process.stdout.write(JSON.stringify(result, null, 2))
+)
+
+process.stdin.resume()
