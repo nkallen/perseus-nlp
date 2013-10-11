@@ -11,7 +11,7 @@ targets = trigrams.json bigrams.json
 train: $(OBJDIR)/morpheus.unaccentuated.json $(OBJDIR)/morpheus.accentuated.json
 	 for x in `find vendor/treebank -name '*grc?.json'`;\
 	 do bin/sentences < $$x;\
-	 done | bin/train > $(OBJDIR)/v.json
+	 done | bin/sentence2training | bin/validate | bin/train
 sentences:
 	 for x in `find vendor/treebank -name '*grc?.json'`;\
 	 do bin/sentences < $$x;\
@@ -20,9 +20,9 @@ bigrams: $(OBJDIR)/bigrams.json
 trigrams: $(OBJDIR)/trigrams.json
 
 $(OBJDIR)/morpheus.unaccentuated.json: $(OBJDIR)/morpheus.tsv
-	cat $(OBJDIR)/morpheus.tsv | bin/token2tag unaccentuated > $(OBJDIR)/morpheus.unaccentuated.json
+	cat $(OBJDIR)/morpheus.tsv | bin/morpheus unaccentuated > $(OBJDIR)/morpheus.unaccentuated.json
 $(OBJDIR)/morpheus.accentuated.json: $(OBJDIR)/morpheus.tsv
-	cat $(OBJDIR)/morpheus.tsv | bin/token2tag accentuated > $(OBJDIR)/morpheus.accentuated.json
+	cat $(OBJDIR)/morpheus.tsv | bin/morpheus accentuated > $(OBJDIR)/morpheus.accentuated.json
 $(OBJDIR)/morpheus.tsv: $(OBJDIR)/greek.morph.uni.xml
 	bin/morphemes2tsv $(OBJDIR)/greek.morph.uni.xml > $(OBJDIR)/morpheus.tsv
 $(OBJDIR)/greek.morph.uni.xml:

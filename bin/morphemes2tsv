@@ -1,4 +1,4 @@
-#!/usr/bin/env coffee --nodejs --prof
+#!/usr/bin/env coffee
 
 fs = require('fs')
 greek = require('perseus-util').greek

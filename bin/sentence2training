@@ -1,0 +1,22 @@
+#!/usr/bin/env coffee
+
+language = require('../lib/language')
+
+raw = ""
+process.stdin.on('data', (chunk) ->
+  raw += chunk
+)
+
+process.stdin.on('end', ->
+  for line in raw.split('\n')
+    break if line.trim() == ''
+    sentence = JSON.parse(line)
+    forms = []
+    labels = []
+    for token in sentence
+      forms.push(token.form)
+      labels.push(language.token2tag(token, language.Features))
+    process.stdout.write("#{JSON.stringify([forms, labels])}\n")
+)
+
+process.stdin.resume()

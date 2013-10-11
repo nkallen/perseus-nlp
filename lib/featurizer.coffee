@@ -36,7 +36,7 @@ class Featurizer
     # Everything but the lemma
     prevprevInflection = prevprevParts[1..].join('-')
     prevInflection = prevParts[1..].join('-')
-    currentInflection = currentParts[1..].join(-)
+    currentInflection = currentParts[1..].join('-')
     result["bigram-inflection:#{prevInflection}:#{currentInflection}"] = 1
     result["trigram-inflection:#{prevprevInflection}:#{prevInflection}:#{currentInflection}"] = 1
     result["bigram-skip-inflection:#{prevprevInflection}:#{currentInflection}"] = 1
@@ -96,7 +96,7 @@ class Featurizer
 
       # Morpheus produced the list of candidate tags given a morpheme, ignorin
       # accentuation. Here we note if we have an EXACT accentuation match.
-      if @morpheusAccentuated[tokens[i]]?[current]
+      if @morpheusAccentuated.isMatch(tokens[i], current)
         result["accentuation-match"] = 1
     result
 

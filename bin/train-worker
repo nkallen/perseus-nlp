@@ -6,20 +6,26 @@ Perceptron = require('../lib/perceptron')
 Viterbi = require('../lib/viterbi')
 SparseVector = require('../lib/vector')
 Featurizer = require('../lib/featurizer')
+Morpheus = require('../lib/morpheus')
 Labelizer = require('../lib/labelizer')
 
-console.warn("#{new Date()}\tLoading constant databases (ngrams, morphological data, etc.).")
+MAX_TABLE_WIDTH = 193
+
+seedPath = process.argv[2]
+if fs.existsSync(seedPath)
+  seed = new SparseVector(JSON.parse(fs.readFileSync(seedPath)))
+else
+  seed = SparseVector.zero()
+
 allLabels = JSON.parse(fs.readFileSync(path.join(__dirname, '../resources/labels.json')))
 nounLabels = ('proper-' + label for label in allLabels when /^noun/.test(label))
-morpheusUnaccentuated = JSON.parse(fs.readFileSync(path.join(__dirname, '../build/morpheus.unaccentuated.json')))
-morpheusAccentuated = JSON.parse(fs.readFileSync(path.join(__dirname, '../build/morpheus.accentuated.json')))
-console.warn("#{new Date()}\tDone loading databases.")
+morpheus = new Morpheus(
+  JSON.parse(fs.readFileSync(path.join(__dirname, '../build/morpheus.accentuated.json'))),
+  JSON.parse(fs.readFileSync(path.join(__dirname, '../build/morpheus.unaccentuated.json'))))
 
-featurizer = new Featurizer(morpheusAccentuated)
-labelizer = new Labelizer(morpheusUnaccentuated, nounLabels)
+featurizer = new Featurizer(morpheus)
+labelizer = new Labelizer(morpheus, nounLabels)
 perceptron = new Perceptron(featurizer, labelizer, (scorer) -> new Viterbi(scorer, MAX_TABLE_WIDTH))
-
-MAX_TABLE_WIDTH = 193
 
 raw = ""
 process.stdin.on('data', (chunk) ->
@@ -27,9 +33,10 @@ process.stdin.on('data', (chunk) ->
 )
 
 process.stdin.on('end', ->
-  [trainings, seed] = JSON.parse(raw)
-  message = JSON.stringify(perceptron.apply(trainings, 1, new SparseVector(seed)).hash)
-  process.stdout.write(message)
+  console.warn("#{new Date}\tProcessing Chunk")
+  trainings = (JSON.parse(line) for line in raw.split(/\n/) when line.trim() != '')
+  trained = perceptron.applyWithoutValidate(trainings, 1, seed)
+  process.stdout.write(JSON.stringify(trained.hash))
 )
 
 process.stdin.resume()

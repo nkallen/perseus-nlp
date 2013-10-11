@@ -1,4 +1,4 @@
-#!/usr/bin/env coffee --nodejs --prof #--nodejs --trace_opt_verbose --nodejs --trace_deopt 
+#!/usr/bin/env coffee
 
 fs = require('fs')
 path = require('path')

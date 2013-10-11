@@ -19,3 +19,5 @@ process.stdin.on('end', ->
     else
       sentence.push(token)
 )
+
+process.stdin.resume()

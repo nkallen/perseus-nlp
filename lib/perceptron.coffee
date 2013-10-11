@@ -8,9 +8,12 @@ class Perceptron
   constructor: (@featurizer, @labelizer, @makeViterbi) ->
 
   apply: (trainings, iterations, seed) ->
+    trainings = Perceptron.validate(@labelizer, trainings)
+    @applyWithoutValidate(trainings, iterations, seed)
+
+  applyWithoutValidate: (trainings, iterations, seed) ->
     v = seed || SparseVector.zero()
     viterbi = @makeViterbi(new Scorer(v, @featurizer))
-    trainings = @validate(trainings)
 
     for i in [0...iterations]
       console.warn("#{new Date}\tPerceptron iteration #{i}")
@@ -35,12 +38,12 @@ class Perceptron
     result.plusEq(@featurizer.featurize(prevprev, prev, language.Stop, tokens, tokens.length))
     result
 
-  validate: (trainings) ->
+  @validate: (labelizer, trainings) ->
     console.warn("#{new Date}\tValidating training data.")
     errors = []
     result = []
     for [tokens, trainingLabels] in trainings
-      labels = (@labelizer.labelize(tokens, i) for token, i in tokens)
+      labels = (labelizer.labelize(tokens, i) for token, i in tokens)
       skip = false
       for token, i in tokens
         if !labels[i].length
