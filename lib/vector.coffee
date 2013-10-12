@@ -30,9 +30,10 @@ class SparseVector
   dot: (that) ->
     that = that.hash if that instanceof SparseVector
 
-    result = 0.0
-    for key, value of that when key of this.hash
-      result += this.hash[key] * value
+    result = 0
+    for key in that # when key of this.hash
+      # result += this.hash[key] * value
+      null
     result
 
 module.exports = SparseVector

@@ -1,0 +1,87 @@
+#!/usr/bin/env coffee --nodejs --max-old-space-size=4096
+
+fs = require('fs')
+path = require('path')
+greek = require('perseus-util').greek
+language = require('../lib/language')
+Perceptron = require('../lib/perceptron')
+Viterbi = require('../lib/viterbi')
+SparseVector = require('../lib/vector')
+Featurizer = require('../lib/featurizer')
+Morpheus = require('../lib/morpheus')
+Labelizer = require('../lib/labelizer')
+Scorer = require('../lib/scorer')
+
+MAX_TABLE_WIDTH = 193
+
+allLabels = JSON.parse(fs.readFileSync(path.join(__dirname, '../resources/labels.json')))
+nounLabels = ('proper-' + label for label in allLabels when /^noun/.test(label))
+morpheus = new Morpheus(
+  JSON.parse(fs.readFileSync(path.join(__dirname, '../build/morpheus.accentuated.json'))),
+  JSON.parse(fs.readFileSync(path.join(__dirname, '../build/morpheus.unaccentuated.json'))))
+featurizer = new Featurizer(morpheus)
+labelizer = new Labelizer(morpheus, nounLabels, ['WTF-WTF'])
+v = new SparseVector(JSON.parse(fs.readFileSync(path.join(__dirname, '../build/seed.json'))))
+scorer = new Scorer(v, featurizer)
+viterbi = new Viterbi(scorer, MAX_TABLE_WIDTH)
+X = viterbi.X
+Y = viterbi.Y
+start = new Date()
+console.warn("#{new Date()}\tDone loading databases.")
+
+raw = ""
+process.stdin.on('data', (chunk) ->
+  raw += chunk
+)
+
+process.stdin.on('end', ->
+  text = JSON.parse(raw)
+  sentence = []
+  for token, n in text
+    elapsed = new Date().getTime() - start.getTime()
+    velocity = n / elapsed
+    remaining = (text.length - n) / velocity
+    process.stderr.write("Token #{n}/#{text.length}. #{remaining / 1000}s remaining\r")
+    if language.StopPunctuation.indexOf(token.form) > -1
+      if sentence.length
+        forms = (token.form for token in sentence)
+        labelss = (labelizer.labelize(forms, i) for form, i in forms)
+        [labels, scores, pointers] = viterbi.trace(forms, labelss)
+        for form, i in forms
+          labelsForPrev     = if i - 1 < 0 then language.Starts else labelss[i - 1] 
+          labelsForCurrent  = labelss[i]
+          sentence[i].labels = []
+          for current, k in labelsForCurrent
+            max = Number.NEGATIVE_INFINITY
+            for prev, j in labelsForPrev
+              idx = i * X + k * Y + j
+              score = scores[idx]
+              if score >= max
+                max = score
+
+            try
+              labelParts = current.split('-')
+              lemma = labelParts[0]
+              pos = labelParts[1]
+              inflections = labelParts[2..]
+              continue unless Pos = greek.PartOfSpeech[pos]
+              attributes = {}
+              for inflection in [greek.Case, greek.Gender, greek.Number, greek.Tense, greek.Voice, greek.Mood, greek.Person]
+                break unless inflections.length
+                if inflection[inflections[0]]
+                  attributes[inflection.toSymbol()] = inflections.shift()
+              attributes.lemma = lemma
+              attributes.score = max
+              attributes.pos = pos
+              sentence[i].labels.push(attributes)
+            catch e
+              console.warn("Skipping #{form} #{current} because #{e}")
+      process.stdout.write(JSON.stringify(sentence) + '\n')
+      sentence = []
+    else
+      sentence.push(token)
+)
+
+titlecase = (string) -> string[0].toUpperCase() + string[1..]
+
+process.stdin.resume()

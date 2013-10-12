@@ -3,7 +3,9 @@ CAPITAL = /^[Α-Ω]/
 language = require('./language')
 
 class Labelizer
-  constructor: (@morpheus, @nounLabels) ->
+  constructor: (@morpheus, @nounLabels, @default) ->
+    @default ||= []
+
   labelize: (tokens, i) ->
     return ['comma-punctuation'] if tokens[i] == ','
     return ['punc-punctuation'] if tokens[i] == '·'
@@ -11,6 +13,6 @@ class Labelizer
     morpheus = @morpheus.get(tokenWithoutAccent)
     return morpheus if morpheus != undefined
     return @nounLabels if CAPITAL.test(tokenWithoutAccent)
-    return []
+    return @default
 
 module.exports = Labelizer

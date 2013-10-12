@@ -4,7 +4,7 @@
   "author": "Nick Kallen",
   "description": "",
   "scripts": {
-    "start": "./node_modules/.bin/coffee bin/server.coffee",
+    "start": "./node_modules/.bin/coffee --nodejs --max-old-space-size=8096 bin/server.coffee",
     "test": "mocha --recursive --compilers coffee:coffee-script"
   },
   "main": "./lib/index.coffee",
@@ -17,11 +17,9 @@
   },
   "dependencies" : {
     "perseus-util"   : "0.0.x",
-    "hashtable"      : "0.1.x",
     "unorm"          : "1.1.x",
     "coffee-script"  : "git://github.com/jashkenas/coffee-script.git#master",
     "express"        : "3.4.x",
-    "JSONStream"     : "0.7.x",
     "ejs"            : "0.8.x",
     "libxmljs"       : "0.8.x"
   },

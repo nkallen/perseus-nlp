@@ -1,0 +1,25 @@
+#!/usr/bin/env coffee
+
+fs = require('fs')
+path = require('path')
+libxml = require('libxmljs')
+util = require('perseus-util')
+xmlVisitor = util.xmlVisitor
+annotator = new util.annotator.SimpleAnnotator(util.greek)
+
+raw = ""
+process.stdin.on('data', (chunk) ->
+  raw += chunk
+)
+
+process.stdin.on('end', ->
+  tokens = []
+  visitText = (parent, child) ->
+    tokens = tokens.concat(annotator.annotate(child.text())[0])
+  visitNode = (parent, child) ->
+    child
+  xmlVisitor.visitText(libxml.parseXml(raw), visitText, visitNode)
+  process.stdout.write(JSON.stringify(tokens))
+)
+
+process.stdin.resume()

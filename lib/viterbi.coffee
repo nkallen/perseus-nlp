@@ -19,8 +19,8 @@ class Viterbi
   MAX_SENTENCE_LENGTH = 100
 
   constructor: (@scorer, @maxTableWidth) ->
-    @scores = new Int32Array(MAX_SENTENCE_LENGTH * @maxTableWidth * @maxTableWidth)
-    @pointers = new Int32Array(MAX_SENTENCE_LENGTH * @maxTableWidth * @maxTableWidth)
+    @scores = new Float64Array(MAX_SENTENCE_LENGTH * @maxTableWidth * @maxTableWidth)
+    @pointers = new Float64Array(MAX_SENTENCE_LENGTH * @maxTableWidth * @maxTableWidth)
     @X = @maxTableWidth * @maxTableWidth
     @Y = @maxTableWidth
 

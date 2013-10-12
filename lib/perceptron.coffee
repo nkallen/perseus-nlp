@@ -26,6 +26,7 @@ class Perceptron
         if computedLabels.some((computedLabel, i) -> computedLabel != trainingLabels[i])
           v.plusEq(@globalFeaturize(tokens, trainingLabels))
           v.minusEq(@globalFeaturize(tokens, computedLabels))
+        
     v
 
   globalFeaturize: (tokens, labels) ->

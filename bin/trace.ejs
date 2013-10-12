@@ -77,8 +77,8 @@
       </table>
       <%
         tokens.forEach(function(token, i) {
-          var labelsForPrevPrev = i - 2 < 0 ? ['START'] : labelss[i - 2],
-              labelsForPrev     = i - 1 < 0 ? ['START'] : labelss[i - 1],
+          var labelsForPrevPrev = i - 2 < 0 ? ['START-START-START'] : labelss[i - 2],
+              labelsForPrev     = i - 1 < 0 ? ['START-START-START'] : labelss[i - 1],
               labelsForCurrent  = labelss[i]
       -%>
         <div class="modal fade" id="token-<%= i %>" tabindex="-1" role="dialog" aria-hidden="true">

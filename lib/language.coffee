@@ -1,13 +1,13 @@
 unorm = require('unorm')
 
 module.exports =
-  StopPunctuation: ['.', ';', ',', '·', '"']
-  StopPunctuationRE: /[.,·;"]/
+  StopPunctuation: ['.', ';', ',', '·', '"', 'ʽ', '“', '”']
+  StopPunctuationRE: /[.,·;"ʽ”“]/
   CombiningAccents: /[\u0300-\u036Fʼ]/g
   Start: '*'
-  Stop: 'STOP-STOP'
-  Starts: ['START-START']
-  Stops: ['STOP-STOP']
+  Stop: 'STOP-STOP-STOP'
+  Starts: ['START-START-START']
+  Stops: ['STOP-STOP-STOP']
   Features: ['partOfSpeech', 'case', 'gender', 'number', 'tense', 'voice', 'mood', 'person']
   stripAccents: (string) ->
     unorm.nfkc(unorm.nfkd(string).replace(@CombiningAccents, ''))
