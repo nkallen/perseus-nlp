@@ -1,10 +1,11 @@
 class Morpheus
-  constructor: (@accentuated, @unaccentuated) ->
+  constructor: (@unaccentuated) ->
 
-  get: (unaccentuatedToken) ->
-    @unaccentuated[unaccentuatedToken]
+  get: (exact, unaccentuated) ->
+    return [] unless tokens = @unaccentuated[unaccentuated]
 
-  isMatch: (token, tag) ->
-    @accentuated[token]?[tag]
+    exactMatches = ([lemma, tokens[i+1]] for lemma, i in tokens by 2 when lemma == exact)
+    return exactMatches if exactMatches.length
+    return ([lemma, tokens[i+1]] for lemma, i in tokens by 2)
 
 module.exports = Morpheus

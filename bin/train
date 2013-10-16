@@ -3,7 +3,7 @@
 childProcess = require('child_process')
 path = require('path')
 fs = require('fs')
-SparseVector = require('../lib/vector')
+vector = require('../lib/vector')
 language = require('../lib/language')
 
 parallelism = 1 #Math.floor(require('os').cpus().length / 2)
@@ -12,9 +12,9 @@ SEED_PATH = path.join(__dirname, '../build/seed.json')
 
 if fs.existsSync(SEED_PATH)
   console.warn("#{new Date}\tFound existing seed at #{SEED_PATH}. Using it. Delete to start from ZERO")
-  seed = new SparseVector(JSON.parse(fs.readFileSync(SEED_PATH)))
+  seed = JSON.parse(fs.readFileSync(SEED_PATH))
 else
-  seed = SparseVector.zero()
+  seed = vector.zero()
 
 raw = ""
 process.stdin.on('data', (chunk) ->
@@ -27,7 +27,7 @@ process.stdin.on('end', ->
   children = []
 
   iterate = (i, trainings, seed) ->
-    fs.writeFileSync(SEED_PATH, JSON.stringify(seed.hash))
+    fs.writeFileSync(SEED_PATH, JSON.stringify(seed))
     process.exit() if i == 0
 
     console.warn("#{new Date()}\tTraining iteration #{ITERATIONS - i + 1}")
@@ -38,7 +38,7 @@ process.stdin.on('end', ->
         child =
           childProcess.spawn(
             './node_modules/coffee-script/bin/coffee',
-            ['--nodejs', '--max-old-space-size=4096', path.join(__dirname, 'train-worker'), SEED_PATH],
+            ['--nodejs', '--max-old-space-size=4096', '--nodejs', '--prof', path.join(__dirname, 'train-worker'), SEED_PATH],
             stdio: ['pipe', 'pipe', process.stderr]
           )
         output = ""

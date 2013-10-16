@@ -10,7 +10,7 @@ class Labelizer
     return ['comma-punctuation'] if tokens[i] == ','
     return ['punc-punctuation'] if tokens[i] == '·'
     tokenWithoutAccent = language.stripAccents(tokens[i])
-    morpheus = @morpheus.get(tokenWithoutAccent)
+    morpheus = @morpheus.get(tokens[i], tokenWithoutAccent)
     return morpheus if morpheus != undefined
     return @nounLabels if CAPITAL.test(tokenWithoutAccent)
     return @default

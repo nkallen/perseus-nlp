@@ -1,6 +1,6 @@
 #!/usr/bin/env coffee
 
-language = require('../lib/language')
+greek = require('perseus-util').greek
 
 raw = ""
 process.stdin.on('data', (chunk) ->
@@ -15,7 +15,7 @@ process.stdin.on('end', ->
     labels = []
     for token in sentence
       forms.push(token.form)
-      labels.push(language.token2tag(token, language.Features))
+      labels.push([token.lemma, greek.postag(token)])
     process.stdout.write("#{JSON.stringify([forms, labels])}\n")
 )
 

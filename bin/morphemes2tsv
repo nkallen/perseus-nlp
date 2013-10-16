@@ -6,14 +6,6 @@ libxml = require('libxmljs')
 stream = require('stream')
 unorm = require('unorm')
 
-help = "
-Import the Perseus Morpheme data into a Database
-
-Provide path to morph file on command line, e.g.,
-
-  ./import.coffee sgml/xml/data/greek.morph.xml
-"
-
 fileSource = fs.createReadStream(
   process.argv[2],
   {encoding: 'utf8'})

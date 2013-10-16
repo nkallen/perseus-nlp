@@ -38,13 +38,16 @@ class Viterbi
         console.warn(tokens[i] + " has too many labels (#{labelsForCurrent.length} labels > #{@maxTableWidth})")
         return
 
-      for prev, j in labelsForPrev
-        for current, k in labelsForCurrent
+      for current, k in labelsForCurrent
+        unigramScore = @scorer.unigram(current, tokens, i)
+        for prev, j in labelsForPrev
+          bigramScore = @scorer.bigram(prev, current, tokens, i)
           max = Number.NEGATIVE_INFINITY
           back = 0
           for prevprev, l in labelsForPrevPrev
             prevScore = if i == 0 then 0 else @scores[(i - 1) * X + j * Y + l]
-            score = prevScore + @scorer.score(prevprev, prev, current, tokens, i)
+            trigramScore = @scorer.trigram(prevprev, prev, current, tokens, i)
+            score = prevScore + unigramScore + bigramScore + trigramScore
             if score >= max
               max = score
               back = l
@@ -56,10 +59,13 @@ class Viterbi
     end = null
     labelsForPrevPrev = if labels.length - 2 < 0 then language.Starts else labels[labels.length - 2]
     labelsForPrev     = labels[labels.length - 1]
+    unigramScore      = @scorer.unigram(language.Stop, tokens, tokens.length)
     for prev, i in labelsForPrev
+      bigramScore = @scorer.bigram(prev, language.Stop, tokens, tokens.length)
       for prevprev, j in labelsForPrevPrev
+        trigramScore = @scorer.trigram(prevprev, prev, language.Stop, tokens, tokens.length)
         idx = (tokens.length - 1) * X + i * Y + j
-        score = @scores[idx] + @scorer.score(prevprev, prev, language.Stop, tokens, tokens.length)
+        score = @scores[idx] + unigramScore + bigramScore + trigramScore
         if score >= max
           max = score
           end = [j, i]
