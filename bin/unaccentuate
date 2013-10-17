@@ -22,8 +22,9 @@ rd.on('line', (line) ->
   [unaccentuated, morphemes] = [language.stripAccents(lemma), JSON.parse(morphemes)]
   result[unaccentuated] ||= []
   for morpheme in morphemes
+    result[unaccentuated].push(morpheme.form)
     result[unaccentuated].push(morpheme.lemma)
-    result[unaccentuated].push(greek.postag(morpheme))
+    result[unaccentuated].push(greek.postag.fromHash(morpheme))
 )
 
 rd.on('close', ->

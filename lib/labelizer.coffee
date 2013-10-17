@@ -12,7 +12,7 @@ class Labelizer
     tokenWithoutAccent = language.stripAccents(tokens[i])
     morpheus = @morpheus.get(tokens[i], tokenWithoutAccent)
     return morpheus if morpheus != undefined
-    return @nounLabels if CAPITAL.test(tokenWithoutAccent)
+    # return @nounLabels if CAPITAL.test(tokenWithoutAccent)
     return @default
 
 module.exports = Labelizer

@@ -44,7 +44,12 @@
                   <% labelss[i].forEach(function(label, j) { -%>
                     <tr class="<%= label == labels[i] ? 'success' : '' %>">
                       <td>
-                        <% var features = featurizer.featurize(labels[i - 2] || starts[0], labels[i - 1] || starts[0], label, tokens, i) -%>
+                        <%
+                          var pp = new PP(v), dot = new Dot(v)
+                          featurizer.featurize(pp, labels[i - 2] || starts[0], labels[i - 1] || starts[0], label, tokens, i)
+                          featurizer.featurize(dot, labels[i - 2] || starts[0], labels[i - 1] || starts[0], label, tokens, i)
+                          var features = pp.features, sum = dot.sum
+                        -%>
                         <span data-toggle="tooltip" data-placement="bottom" data-html="true" title="
                           <table>
                             <thead>
@@ -54,17 +59,25 @@
                               <% Object.keys(features).sort().forEach(function(name) { -%>
                                 <tr>
                                   <th><%= name %></th>
-                                  <td><%= features[name] %></td>
-                                  <td><%= v.hash[name] || 0 %></td>
+                                  <td><%= 1 %></td>
+                                  <td><%= features[name] || 0 %></td>
                                 </tr>
                               <% }) -%>
                             </tbody>
                             <tfoot>
-                              <tr><td></td><td colspan='2'><%= v.dot(features) %></td></tr>
+                              <tr><td></td><td colspan='2'><%= sum %></td></tr>
                             </tfoot>
                           </table>
                         ">
-                          <%= label %>
+                          <%= label[0] %>
+                          <%
+                            var hash = postag.toHash(label[1])
+                            Object.keys(hash).forEach(function(key) {
+                          -%>
+                            <%= hash[key] %>
+                          <%
+                            })
+                          -%>
                         </span>
                       </td>
                     </tr>
@@ -116,8 +129,12 @@
                         <%
                           labelsForPrev.forEach(function(prev, j) {
                             var idx = idx = i * X + k * Y + j,
-                                features = featurizer.featurize(labels[i - 2] || starts[0], prev || starts[0], current, tokens, i)
-                      -%>
+                                pp = new PP(v),
+                                dot = new Dot(v)
+                            featurizer.featurize(pp, labels[i - 2] || starts[0], prev || starts[0], current, tokens, i)
+                            featurizer.featurize(dot, labels[i - 2] || starts[0], prev || starts[0], current, tokens, i)
+                            var features = pp.features, sum = dot.sum
+                        -%>
                           <td class="<%= prev == labels[i - 1] && current == labels[i] ? 'success' : '' %>">
                             <span data-toggle="tooltip" data-placement="bottom" data-html="true" title="
                               <ol>
@@ -133,13 +150,13 @@
                                   <% Object.keys(features).sort().forEach(function(name) { -%>
                                     <tr>
                                       <th><%= name %></th>
-                                      <td><%= features[name] %></td>
-                                      <td><%= v.hash[name] || 0 %></td>
+                                      <td><%= 1 %></td>
+                                      <td><%= features[name] || 0 %></td>
                                     </tr>
                                   <% }) -%>
                                 </tbody>
                                 <tfoot>
-                                  <tr><td></td><td colspan='2'><%= v.dot(features) %></td></tr>
+                                  <tr><td></td><td colspan='2'><%= sum  %></td></tr>
                                 </tfoot>
                               </table>
                             ">

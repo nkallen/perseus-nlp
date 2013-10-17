@@ -1,3 +1,5 @@
+postag = require('perseus-util').greek.postag
+
 class Dot
   constructor: (@v) ->
     @sum = 0
@@ -69,6 +71,39 @@ class MinusEq
     @v.fact[name] ||= 0
     @v.fact[name]--
 
+class PP
+  constructor: (@v) ->
+    @features = {}
+  trigram: (name, prevprev, prev, current) ->
+    x = @v.trigram[name]?[prevprev]?[prev]?[current]
+    unless isNaN(prevprev)
+      prevprev = (value for key, value of postag.toHash(prevprev))
+    unless isNaN(prev)
+      prev = (value for key, value of postag.toHash(prev))
+    unless isNaN(current)
+      current = (value for key, value of postag.toHash(current))
+    @features["trigram:#{name}:#{prevprev}:#{prev}:#{current}"] = x || 0
+  bigram: (name, prev, current) ->
+    x = @v.bigram[name]?[prev]?[current]
+    unless isNaN(prev)
+      prev = (value for key, value of postag.toHash(prev))
+    unless isNaN(current)
+      current = (value for key, value of postag.toHash(current))
+    @features["bigram:#{name}:#{prev}:#{current}"] = x || 0
+  condition: (name, current, condition) ->
+    x = @v.condition[name]?[current]?[condition]
+    unless isNaN(current)
+      current = (value for key, value of postag.toHash(current))
+    @features["condition:#{name}:#{current}|#{condition}"] = x || 0
+  df: (name, current) ->
+    x = @v.df[name]?[current]
+    unless isNaN(current)
+      current = (value for key, value of postag.toHash(current))
+    @features["df:#{name}:#{current}"] = x || 0
+  fact: (name) ->
+    x = @v.fact[name]
+    @features["fact:#{name}"] = x || 0
+
 zero = () ->
   trigram: {}
   bigram: {}
@@ -81,3 +116,4 @@ module.exports =
   PlusEq: PlusEq
   MinusEq: MinusEq
   Dot: Dot
+  PP: PP

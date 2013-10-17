@@ -1,11 +1,20 @@
+language = require('./language')
+
 class Morpheus
   constructor: (@unaccentuated) ->
 
   get: (exact, unaccentuated) ->
-    return [] unless tokens = @unaccentuated[unaccentuated]
+    unaccentuated ||= language.stripAccents(exact)
+    return [] unless matches = @unaccentuated[unaccentuated]
 
-    exactMatches = ([lemma, tokens[i+1]] for lemma, i in tokens by 2 when lemma == exact)
+    exactMatches = []
+    fuzzyMatches = []
+    for matched, i in matches by 3
+      [form, lemma, postag] = [matches[i], matches[i+1], matches[i+2]]
+      exactMatches.push([lemma, postag]) if form == exact
+      fuzzyMatches.push([lemma, postag])
+
     return exactMatches if exactMatches.length
-    return ([lemma, tokens[i+1]] for lemma, i in tokens by 2)
+    return fuzzyMatches
 
 module.exports = Morpheus

@@ -15,7 +15,7 @@ process.stdin.on('end', ->
     labels = []
     for token in sentence
       forms.push(token.form)
-      labels.push([token.lemma, greek.postag(token)])
+      labels.push([token.lemma, greek.postag.fromHash(token)])
     process.stdout.write("#{JSON.stringify([forms, labels])}\n")
 )
 
