@@ -79,7 +79,6 @@ class Viterbi
     result
 
   trace: (tokens, labels) ->
-    labels = @label(tokens, labels)
-    [labels, entry for entry in @scores, entry for entry in @pointers]
+    [@label(tokens, labels), @scores, @pointers]
 
 module.exports = Viterbi

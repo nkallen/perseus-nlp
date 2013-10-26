@@ -7,11 +7,20 @@ targets = trigrams.json bigrams.json
 .PHONY: bigrams
 .PHONY: trigrams
 .PHONY: sentences
+.PHONY: herodotus
 
 train: $(OBJDIR)/morpheus.unaccentuated.json
 	 for x in `find vendor/treebank -name '*grc?.json'`;\
 	 do bin/sentences < $$x;\
-	 done | bin/sentence2training | bin/validate | bin/train-worker build/seed.json > v.json
+	 done\
+	 | bin/sentence2training
+	 | bin/validate\
+	 | bin/train-worker build/seed.json > v.json
+herodotus: $(OBJDIR)/v.json $(OBJDIR)/morpheus.unaccentuated.json
+		cat ./vendor/canonical/CTS_XML_TEI/perseus/greekLit/tlg0016/tlg001/tlg0016.tlg001.perseus-grc1.xml\
+		| ./bin/tokenize\
+		| ./bin/label\
+		| ./bin/jsonn2json > build/tlg0016.tlg001.perseus-grc1.json
 sentences:
 	 for x in `find vendor/treebank -name '*grc?.json'`;\
 	 do bin/sentences < $$x;\

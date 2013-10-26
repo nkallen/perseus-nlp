@@ -1,0 +1,18 @@
+#!/usr/bin/env coffee
+
+fs = require('fs')
+
+raw = new Buffer(0)
+process.stdin.on('data', (chunk) ->
+  raw = Buffer.concat([raw, chunk])
+)
+
+process.stdin.on('end', ->
+  result = []
+  for line in raw.toString().split(/\n/) when line.trim() != ''
+    result = result.concat(JSON.parse(line))
+
+  process.stdout.write(JSON.stringify(result2))
+)
+
+process.stdin.resume()

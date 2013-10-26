@@ -3,13 +3,14 @@
 fs = require('fs')
 path = require('path')
 libxml = require('libxmljs')
+unorm = require('unorm')
 util = require('perseus-util')
 xmlVisitor = util.xmlVisitor
 annotator = new util.annotator.SimpleAnnotator(util.greek)
 
-raw = ""
+raw = new Buffer(0)
 process.stdin.on('data', (chunk) ->
-  raw += chunk
+  raw = Buffer.concat([raw, chunk])
 )
 
 process.stdin.on('end', ->

@@ -2,13 +2,13 @@
 
 greek = require('perseus-util').greek
 
-raw = ""
+raw = new Buffer(0)
 process.stdin.on('data', (chunk) ->
-  raw += chunk
+  raw = Buffer.concat([raw, chunk])
 )
 
 process.stdin.on('end', ->
-  for line in raw.split('\n')
+  for line in raw.toString().split('\n')
     break if line.trim() == ''
     sentence = JSON.parse(line)
     forms = []

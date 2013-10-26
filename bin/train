@@ -16,13 +16,13 @@ if fs.existsSync(SEED_PATH)
 else
   seed = vector.zero()
 
-raw = ""
+raw = new Buffer(0)
 process.stdin.on('data', (chunk) ->
-  raw += chunk
+  raw = Buffer.concat([raw, chunk])
 )
 
 process.stdin.on('end', ->
-  trainings = (JSON.parse(line) for line in raw.split('\n') when line.trim() != '')
+  trainings = (JSON.parse(line) for line in raw.toString().split('\n') when line.trim() != '')
   hunkSize = Math.ceil(trainings.length / parallelism)
   children = []
 

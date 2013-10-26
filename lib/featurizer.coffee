@@ -121,6 +121,7 @@ class Featurizer
     return true if pos == partOfSpeech.article
     return true if pos == partOfSpeech.noun
     return true if pos == partOfSpeech.adjective
+    return true if pos == partOfSpeech.numeral
     return true if pos == partOfSpeech.participle
     false
 

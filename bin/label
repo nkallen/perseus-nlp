@@ -1,8 +1,9 @@
-#!/usr/bin/env coffee --nodejs --max-old-space-size=4096
+#!/usr/bin/env coffee
 
 fs = require('fs')
 path = require('path')
 greek = require('perseus-util').greek
+postag = greek.postag
 language = require('../lib/language')
 Perceptron = require('../lib/perceptron')
 Viterbi = require('../lib/viterbi')
@@ -14,14 +15,13 @@ Scorer = require('../lib/scorer')
 
 MAX_TABLE_WIDTH = 193
 
+console.warn("#{new Date()}\tLoading databases into RAM... This will take a couple minutes.")
 allLabels = JSON.parse(fs.readFileSync(path.join(__dirname, '../resources/labels.json')))
 nounLabels = ('proper-' + label for label in allLabels when /^noun/.test(label))
-morpheus = new Morpheus(
-  JSON.parse(fs.readFileSync(path.join(__dirname, '../build/morpheus.accentuated.json'))),
-  JSON.parse(fs.readFileSync(path.join(__dirname, '../build/morpheus.unaccentuated.json'))))
+morpheus = new Morpheus(JSON.parse(fs.readFileSync(path.join(__dirname, '../build/morpheus.unaccentuated.json'))))
 featurizer = new Featurizer(morpheus)
-labelizer = new Labelizer(morpheus, nounLabels, ['WTF-WTF'])
-v = new SparseVector(JSON.parse(fs.readFileSync(path.join(__dirname, '../build/seed.json'))))
+labelizer = new Labelizer(morpheus, nounLabels)
+v = JSON.parse(fs.readFileSync(path.join(__dirname, '../build/v.json')))
 scorer = new Scorer(v, featurizer)
 viterbi = new Viterbi(scorer, MAX_TABLE_WIDTH)
 X = viterbi.X
@@ -29,9 +29,9 @@ Y = viterbi.Y
 start = new Date()
 console.warn("#{new Date()}\tDone loading databases.")
 
-raw = ""
+raw = new Buffer(0)
 process.stdin.on('data', (chunk) ->
-  raw += chunk
+  raw = Buffer.concat([raw, chunk])
 )
 
 process.stdin.on('end', ->
@@ -41,8 +41,9 @@ process.stdin.on('end', ->
     elapsed = new Date().getTime() - start.getTime()
     velocity = n / elapsed
     remaining = (text.length - n) / velocity
-    process.stderr.write("Token #{n}/#{text.length}. #{remaining / 1000}s remaining\r")
+    process.stderr.write("Token #{n+1}/#{text.length}. #{remaining / 1000}s remaining\r")
     if language.StopPunctuation.indexOf(token.form) > -1
+      stop = token
       if sentence.length
         forms = (token.form for token in sentence)
         labelss = (labelizer.labelize(forms, i) for form, i in forms)
@@ -59,29 +60,14 @@ process.stdin.on('end', ->
               if score >= max
                 max = score
 
-            try
-              labelParts = current.split('-')
-              lemma = labelParts[0]
-              pos = labelParts[1]
-              inflections = labelParts[2..]
-              continue unless Pos = greek.PartOfSpeech[pos]
-              attributes = {}
-              for inflection in [greek.Case, greek.Gender, greek.Number, greek.Tense, greek.Voice, greek.Mood, greek.Person]
-                break unless inflections.length
-                if inflection[inflections[0]]
-                  attributes[inflection.toSymbol()] = inflections.shift()
-              attributes.lemma = lemma
-              attributes.score = max
-              attributes.pos = pos
-              sentence[i].labels.push(attributes)
-            catch e
-              console.warn("Skipping #{form} #{current} because #{e}")
+            [lemma, tag] = current
+            sentence[i].labels.push([score, lemma, tag])
+
+      sentence.push(stop)
       process.stdout.write(JSON.stringify(sentence) + '\n')
       sentence = []
     else
       sentence.push(token)
 )
-
-titlecase = (string) -> string[0].toUpperCase() + string[1..]
 
 process.stdin.resume()

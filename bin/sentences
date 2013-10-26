@@ -3,16 +3,16 @@
 libxml = require('libxmljs')
 language = require('../lib/language')
 
-raw = ""
+raw = new Buffer(0)
 process.stdin.on('data', (chunk) ->
-  raw += chunk
+  raw = Buffer.concat([raw, chunk])
 )
 
 process.stdin.on('end', ->
   text = JSON.parse(raw)
   sentence = []
   for token in text
-    if language.StopPunctuation.indexOf(token.form) > -1
+    if language.StopPunctuation.indexOf(token) > -1
       if sentence.length
         process.stdout.write(JSON.stringify(sentence) + '\n')
       sentence = []
