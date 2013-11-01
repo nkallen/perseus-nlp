@@ -12,7 +12,7 @@ process.stdin.on('end', ->
   for line in raw.toString().split(/\n/) when line.trim() != ''
     result = result.concat(JSON.parse(line))
 
-  process.stdout.write(JSON.stringify(result2))
+  process.stdout.write(JSON.stringify(result))
 )
 
 process.stdin.resume()

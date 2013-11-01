@@ -7,7 +7,7 @@ class Labelizer
     @default ||= ['unknown', 0]
 
   labelize: (tokens, i) ->
-    tokenWithoutAccent = language.stripAccents(tokens[i])
+    tokenWithoutAccent = language.stripAccents(tokens[i]) # XXX FIXME normalize accute accent to grave
     morpheus = @morpheus.get(tokens[i], tokenWithoutAccent)
     return morpheus if morpheus.length > 0
     # return @nounLabels if CAPITAL.test(tokenWithoutAccent)

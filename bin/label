@@ -63,6 +63,33 @@ process.stdin.on('end', ->
             [lemma, tag] = current
             sentence[i].labels.push([score, lemma, tag])
 
+      for token, i in sentence
+        bestLabel = labels[i]
+        allLabels = token.labels
+        hash = {}
+        for label in allLabels
+          [score, lemma, tag] = label
+          hash[lemma] ||=
+            total: 0
+            max: Number.NEGATIVE_INFINITY
+            tags: []
+            lemma: lemma
+
+          hash[lemma].tags.push([score, tag])
+          hash[lemma].total += score
+          hash[lemma].max = score if score > hash[lemma].max
+
+        sortedByLemma = (value for ignored, value of hash).sort((a, b) ->
+          return -1 if a.lemma == bestLabel[0]
+          return 1  if b.lemma == bestLabel[0]
+          b.max - a.max
+        )
+        token.labels = []
+        for s in sortedByLemma
+          sortedTags = s.tags.sort((a, b) -> b[0] - a[0])
+          sortedTags = (tag[1] for tag in sortedTags)
+          token.labels.push([s.lemma, sortedTags])
+
       sentence.push(stop)
       process.stdout.write(JSON.stringify(sentence) + '\n')
       sentence = []
